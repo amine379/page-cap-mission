@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cap Mission - Vidéo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center; border-top: 8px solid #f26522; }
+        .logo { width: 140px; margin-bottom: 25px; }
+        h2 { color: #2e3192; margin-bottom: 10px; font-size: 1.5rem; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 30px; }
+        
+        /* L'icône Camera pour mobile */
+        .camera-trigger {
+            background: #fdf2ed; border: 2px dashed #f26522; border-radius: 50%;
+            width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px auto; cursor: pointer; transition: transform 0.2s;
+        }
+        .camera-trigger:active { transform: scale(0.95); }
+        .camera-icon { font-size: 50px; }
+
+        #file-name { color: #2e3192; font-weight: 600; margin-bottom: 20px; display: none; }
+        
+        .btn-submit {
+            background: #2e3192; color: white; border: none; padding: 18px;
+            width: 100%; border-radius: 12px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; display: none; box-shadow: 0 4px 15px rgba(46, 49, 146, 0.3);
+        }
+        #loader { display: none; margin-top: 15px; color: #f26522; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <img src="https://sb.capmission.ma/files/site/images/logo.png" class="logo" alt="Cap Mission">
+        <h2>Votre Vidéo</h2>
+        <p>Appuyez sur l'icône pour filmer votre présentation (max 1 min).</p>
+
+        <form id="uploadForm">
+            <input type="hidden" name="email" id="hiddenEmail">
+            
+            <label for="video-input" class="camera-trigger">
+                <span class="camera-icon">📸</span>
+            </label>
+            <input type="file" id="video-input" name="video" accept="video/*" capture="user" style="display:none">
+            
+            <div id="file-name">Vidéo sélectionnée ! ✅</div>
+            
+            <button type="submit" id="submitBtn" class="btn-submit">ENVOYER MAINTENANT</button>
+        </form>
+
+        <div id="loader">Envoi en cours... 🚀<br><small>Merci de ne pas fermer cette page</small></div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // 1. Extraction de l'email depuis l'URL (?email=nom@mail.com)
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailCandidat = urlParams.get('email');
+        if (emailCandidat) {
+            document.getElementById('hiddenEmail').value = emailCandidat;
+        }
+
+        const input = document.getElementById('video-input');
+        const btn = document.getElementById('submitBtn');
+        const fileName = document.getElementById('file-name');
+        const loader = document.getElementById('loader');
+
+        // 2. Détection de la capture vidéo
+        input.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                fileName.style.display = 'block';
+                btn.style.display = 'block';
+                // Animation scroll vers le bouton
+                btn.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        // 3. Envoi au serveur Node.js
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            btn.style.display = 'none';
+            loader.style.display = 'block';
+
+            const formData = new FormData(e.target);
+            
+            try {
+                // REMPLACEZ PAR VOTRE URL REELLE (ex: https://api.capmission.ma/upload)
+                const SERVER_URL = "http://localhost:3000/upload"; 
+
+                const response = await fetch(SERVER_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.querySelector('.card').innerHTML = `
+                        <h1 style="font-size: 50px;">🎉</h1>
+                        <h2 style="color: #f26522;">Merci !</h2>
+                        <p>Votre candidature a été transmise avec succès.</p>
+                    `;
+                } else {
+                    throw new Error(result.error || "Erreur serveur");
+                }
+            } catch (err) {
+                alert("Erreur lors de l'envoi : " + err.message);
+                btn.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
